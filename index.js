@@ -1,13 +1,18 @@
 const fs = require('fs');
 const readline = require('readline');
 const { google } = require('googleapis');
+const Twilio = require('twilio');
 
 // If modifying these scopes, delete token.json.
-const SCOPES = ['https://www.googleapis.com/auth/calendar.readonly', 'https://www.googleapis.com/auth/contacts'];
+const SCOPES = [
+  'https://www.googleapis.com/auth/calendar.readonly',
+  'https://www.googleapis.com/auth/contacts',
+];
 // The file token.json stores the user's access and refresh tokens, and is
 // created automatically when the authorization flow completes for the first
 // time.
 const TOKEN_PATH = 'token.json';
+const TWILIO_TOKEN_PATH = 'twilio_token.json';
 
 /**
  * Get and store new token after prompting for user authorization, and then
@@ -56,22 +61,18 @@ async function authorize(credentials) {
 
   try {
     token = fs.readFileSync(TOKEN_PATH);
-    console.log(`Got token from file ${token}`);
     oAuth2Client.setCredentials(JSON.parse(token));
   } catch (error) {
-    console.log('Needs auth');
     needsAuth = true;
   }
 
   if (needsAuth) {
     token = await getAccessToken(oAuth2Client);
-    console.log(`Got token ${JSON.stringify(token)}`);
     oAuth2Client.setCredentials(token);
-    console.log('Set credentials');
+    console.log('Writing Google credentials file...');
     fs.writeFileSync(TOKEN_PATH, JSON.stringify(token));
-    console.log('Wrote credentials file');
+    console.log('Successfully wrote Google credentials file');
   }
-  console.log('Returning oAuth2Client');
   return oAuth2Client;
 }
 
@@ -101,17 +102,75 @@ async function listEvents(auth) {
   }
 }
 
-async function listPeople(auth) {
+async function getBirthdays(auth) {
   const people = google.people({ version: 'v1', auth });
 
   const {
     data: { connections },
   } = await people.people.connections.list({
-    personFields: ['names', 'emailAddresses', 'birthdays'],
+    personFields: ['names', 'birthdays', 'phoneNumbers', 'userDefined'],
     resourceName: 'people/me',
+    sortOrder: 'LAST_MODIFIED_DESCENDING',
   });
-  console.log("\n\nUser's Connections:\n");
-  connections.forEach((c) => console.log(JSON.stringify(c)));
+
+  const birthdays = [];
+  connections.forEach((connection) => {
+    let birthdayObject = { name: connection.names[0].displayName };
+    let hasBirthday = false;
+    let shouldSendBirthday = false;
+    let hasMobileNumber = false;
+    if (connection.phoneNumbers) {
+      connection.phoneNumbers.forEach((number) => {
+        if (number.type === "mobile") {
+          hasMobileNumber = true;
+          birthdayObject.to = number.canonicalForm;
+        }
+      })
+    }
+    if (connection.birthdays) {
+      connection.birthdays.forEach((birthday) => {
+        if (birthday.date) {
+          const today = new Date();
+          if (birthday.date.month === today.getMonth() + 1 && birthday.date.day === today.getDate()) {
+            hasBirthday = true;
+          }
+        }
+      });
+    }
+    if (hasBirthday) {
+      if (connection.userDefined) {
+        connection.userDefined.forEach((userDefined) => {
+          if (userDefined.key === 'happyBirthday' && userDefined.value === 'true') {
+            shouldSendBirthday = true;
+          }
+        });
+      }
+    }
+    if (hasBirthday && shouldSendBirthday && hasMobileNumber) {
+      birthdays.push(birthdayObject)
+    };
+  });
+  return birthdays;
+}
+
+async function sendTwilioMessages(twilioClient, messages) {
+  return Promise.all(messages.map((message) => {
+    return twilioClient.messages.create({
+      body: `Happy Birthday ${message.name}! I hope you have a great day! From Steve!`,
+      to: message.to,
+      from: '+12262127469',
+    })
+  }))
+}
+
+async function getTwilioClient() {
+  let credentials;
+  
+  credentials = fs.readFileSync(TWILIO_TOKEN_PATH);
+
+  const { accountSid, authToken } = JSON.parse(credentials);
+
+  return new Twilio(accountSid, authToken);
 }
 
 (async () => {
@@ -119,7 +178,7 @@ async function listPeople(auth) {
   try {
     credentialsContent = fs.readFileSync('credentials.json', 'utf8');
   } catch (error) {
-    if (error) console.log('Error loading client secret file:', error);
+    if (error) console.log('Error loading Google client secret file:', error);
     process.exit(1);
   }
 
@@ -127,9 +186,26 @@ async function listPeople(auth) {
   try {
     oAuth2Client = await authorize(JSON.parse(credentialsContent));
   } catch (error) {
-    if (error) console.log('Error authorizing client:', error);
+    if (error) console.log('Error authorizing against Google:', error);
     process.exit(1);
   }
 
-  await listPeople(oAuth2Client);
+  const birthdaysToSend = await getBirthdays(oAuth2Client);
+
+  let twilioClient;
+  try {
+    twilioClient = await getTwilioClient();
+  } catch (error) {
+    if (error) console.log('Error loading Twilio secret file:', error);
+    process.exit(1);
+  }
+
+  let twilioSuccessMessages;
+  try {
+    twilioSuccessMessages = await sendTwilioMessages(twilioClient, birthdaysToSend);
+  } catch (error) {
+    if (error) console.log('Error sending twilio messages:', error);
+    process.exit(1);
+  }
+  console.log(`Sent ${twilioSuccessMessages.length} happy birthdays.`);
 })();
