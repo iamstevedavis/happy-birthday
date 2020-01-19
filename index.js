@@ -165,7 +165,7 @@ async function sendTwilioMessages(twilioClient, messages) {
 
 async function getTwilioClient() {
   let credentials;
-  
+
   credentials = fs.readFileSync(TWILIO_TOKEN_PATH);
 
   const { accountSid, authToken } = JSON.parse(credentials);
@@ -173,7 +173,7 @@ async function getTwilioClient() {
   return new Twilio(accountSid, authToken);
 }
 
-(async () => {
+async function happyBirthday() {
   let credentialsContent = null;
   try {
     credentialsContent = fs.readFileSync('credentials.json', 'utf8');
@@ -207,5 +207,15 @@ async function getTwilioClient() {
     if (error) console.log('Error sending twilio messages:', error);
     process.exit(1);
   }
-  console.log(`Sent ${twilioSuccessMessages.length} happy birthdays.`);
-})();
+  return { birthdaysSent: `Sent ${twilioSuccessMessages.length} happy birthdays.`, birthdaysToSend };
+}
+
+
+exports.handler = async (event) => {
+  const { birthdaysSent, birthdaysToSend } = await happyBirthday();
+  const response = {
+    statusCode: 200,
+    body: { birthdaysSent, recipients: birthdaysToSend },
+  };
+  return response;
+};

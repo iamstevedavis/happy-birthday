@@ -71,3 +71,4 @@ yarn-error.log
 token.json
 credentials.json
 twilio_token.json
+*.zip
