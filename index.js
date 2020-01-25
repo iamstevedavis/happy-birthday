@@ -122,12 +122,3 @@ exports.handler = async (event) => {
   };
   return response;
 };
-
-(async function () {
-  const { birthdaysSent, birthdaysToSend } = await happyBirthday();
-  const response = {
-    statusCode: 200,
-    body: { birthdaysSent, recipients: JSON.stringify(birthdaysToSend) },
-  };
-  console.log(response);
-}());
