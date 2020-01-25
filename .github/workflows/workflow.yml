@@ -11,7 +11,8 @@ jobs:
     steps:
     - uses: actions/checkout@master
     - run: npm install
-    - run: zip -r artifact.zip artifacts
+    - run: mkdir artifacts
+    - run: zip -r artifacts/artifact.zip ./
     - uses: jakejarvis/s3-sync-action@master
       with:
         args: --follow-symlinks --delete --exclude '.git/*'
