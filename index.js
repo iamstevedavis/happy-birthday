@@ -21,7 +21,7 @@ async function authorize() {
     oAuth2Client.setCredentials({
       access_token: process.env.GOOGLE_ACCESS_TOKEN,
       refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
-      scope: process.env.GOOGLE_SCOPE,
+      scope: ['https://www.googleapis.com/auth/contacts', 'https://www.googleapis.com/auth/calendar.readonly'],
       token_type: process.env.GOOGLE_TOKEN_TYPE,
       expiry_date: process.env.GOOGLE_EXPIRY_DATE
     });
@@ -88,7 +88,7 @@ async function sendTwilioMessages(twilioClient, messages) {
     return twilioClient.messages.create({
       body: `Happy Birthday ${message.name}! I hope you have a great day! From Steve!`,
       to: message.to,
-      from: `+${process.env.TWILLIO_NUMBER}`,
+      from: `+${process.env.TWILIO_NUMBER}`,
     })
   }))
 }
@@ -118,7 +118,7 @@ exports.handler = async (event) => {
   const { birthdaysSent, birthdaysToSend } = await happyBirthday();
   const response = {
     statusCode: 200,
-    body: { birthdaysSent, recipients: birthdaysToSend },
+    body: { birthdaysSent, recipients: JSON.stringify(birthdaysToSend) },
   };
   return response;
 };
@@ -127,7 +127,7 @@ exports.handler = async (event) => {
   const { birthdaysSent, birthdaysToSend } = await happyBirthday();
   const response = {
     statusCode: 200,
-    body: { birthdaysSent, recipients: birthdaysToSend },
+    body: { birthdaysSent, recipients: JSON.stringify(birthdaysToSend) },
   };
   console.log(response);
 }());
