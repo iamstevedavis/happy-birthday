@@ -1,5 +1,6 @@
 const { google } = require('googleapis');
 const Twilio = require('twilio');
+const reduce = require('lodash.reduce');
 
 require('dotenv').config();
 
@@ -43,22 +44,22 @@ async function getBirthdays(auth) {
     sortOrder: 'LAST_MODIFIED_DESCENDING',
   });
 
-  return connections.filter((connection) => {
+  return reduce(connections, (result, connection) => {
     const birthdayObject = { name: connection.names[0].displayName };
 
-    if (!connection.userDefined) return false;
+    if (!connection.userDefined) return result;
 
     const canSendHappyBirthday = connection.userDefined.find(
       (userDefined) => userDefined.key === 'happyBirthday' && userDefined.value === 'true',
     );
-    if (!canSendHappyBirthday) return false;
+    if (!canSendHappyBirthday) return result;
 
     // Filter out anyone who does not have a cell number on record
     const contactCellNumber = connection.phoneNumbers.find(
       (phoneNumber) => phoneNumber.type === 'mobile',
     );
-    if (!contactCellNumber) return false;
-    birthdayObject.to = contactCellNumber;
+    if (!contactCellNumber) return result;
+    birthdayObject.to = contactCellNumber.canonicalForm;
 
     // Filter out anyone whose birthday is not today
     const contactBirthday = connection.birthdays.find((birthday) => {
@@ -74,9 +75,11 @@ async function getBirthdays(auth) {
       return false;
     });
 
-    if (!contactBirthday) return false;
-    return true;
-  });
+    if (!contactBirthday) return result;
+
+    result.push(birthdayObject);
+    return result;
+  }, []);
 }
 
 async function sendTwilioMessages(twilioClient, messages) {

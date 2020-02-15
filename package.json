@@ -12,6 +12,7 @@
   "dependencies": {
     "dotenv": "^8.2.0",
     "googleapis": "^46.0.0",
+    "lodash.reduce": "^4.6.0",
     "twilio": "^3.39.2"
   },
   "devDependencies": {
