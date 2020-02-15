@@ -47,7 +47,7 @@ async function getBirthdays(auth) {
     sortOrder: 'LAST_MODIFIED_DESCENDING',
   });
 
-  console.log(`Connections from Google ${JSON.stringify(connections)}`);
+  console.log(`Got ${connections.length} connections from Google`);
 
   return reduce(connections, (result, connection) => {
     const birthdayObject = { name: connection.names[0].displayName };
