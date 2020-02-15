@@ -94,7 +94,6 @@ async function happyBirthday() {
   try {
     oAuth2Client = await authorize();
   } catch (error) {
-    if (error) console.log('Error authorizing against Google:', error);
     process.exit(1);
   }
 
@@ -106,7 +105,6 @@ async function happyBirthday() {
       birthdaysToSend,
     );
   } catch (error) {
-    if (error) console.log('Error sending twilio messages:', error);
     process.exit(1);
   }
   return {
@@ -115,6 +113,7 @@ async function happyBirthday() {
   };
 }
 
+// eslint-disable-next-line no-unused-vars
 exports.handler = async (event) => {
   const { birthdaysSent, birthdaysToSend } = await happyBirthday();
   const response = {
