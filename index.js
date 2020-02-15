@@ -117,7 +117,7 @@ async function happyBirthday() {
 }
 
 // eslint-disable-next-line no-unused-vars
-exports.handler = async (event) => {
+exports.handler = async function _lambda(event, context) {
   const { birthdaysSent, birthdaysToSend } = await happyBirthday();
   const response = {
     statusCode: 200,
