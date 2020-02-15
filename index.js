@@ -48,11 +48,15 @@ async function getBirthdays(auth) {
 
     if (!connection.userDefined) return false;
 
-    const canSendHappyBirthday = connection.userDefined.find((userDefined) => userDefined.key === 'happyBirthday' && userDefined.value === 'true');
+    const canSendHappyBirthday = connection.userDefined.find(
+      (userDefined) => userDefined.key === 'happyBirthday' && userDefined.value === 'true',
+    );
     if (!canSendHappyBirthday) return false;
 
     // Filter out anyone who does not have a cell number on record
-    const contactCellNumber = connection.phoneNumbers.find((phoneNumber) => phoneNumber.type === 'mobile');
+    const contactCellNumber = connection.phoneNumbers.find(
+      (phoneNumber) => phoneNumber.type === 'mobile',
+    );
     if (!contactCellNumber) return false;
     birthdayObject.to = contactCellNumber;
 
