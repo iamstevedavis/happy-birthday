@@ -28,7 +28,10 @@ async function authorize() {
       token_type: process.env.GOOGLE_TOKEN_TYPE,
       expiry_date: process.env.GOOGLE_EXPIRY_DATE,
     });
-  } catch (error) {}
+  } catch (error) {
+    console.log(`Error authenticating with Google ${error}`);
+    process.exit(1);
+  }
 
   return oAuth2Client;
 }
@@ -101,6 +104,7 @@ async function happyBirthday() {
   }
 
   const birthdaysToSend = await getBirthdays(oAuth2Client);
+  console.log(`Birthdays to send ${JSON.stringify(birthdaysToSend)}`);
   let twilioSuccessMessages;
   try {
     twilioSuccessMessages = await sendTwilioMessages(
@@ -108,6 +112,7 @@ async function happyBirthday() {
       birthdaysToSend,
     );
   } catch (error) {
+    console.log(`Error sending Twilio messages ${JSON.stringify(error)}`);
     process.exit(1);
   }
   return {
