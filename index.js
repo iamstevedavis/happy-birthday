@@ -1,4 +1,3 @@
-const fs = require('fs');
 const { google } = require('googleapis');
 const Twilio = require('twilio');
 
@@ -11,7 +10,7 @@ require('dotenv').config();
  * @param {function} callback The callback to call with the authorized client.
  */
 async function authorize() {
-  let oAuth2Client = new google.auth.OAuth2(
+  const oAuth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_INSTALLED_CLIENT_ID,
     process.env.GOOGLE_INSTALLED_CLIENT_SECRET,
     process.env.GOOGLE_INSTALLED_REDIRECT_URI,
@@ -21,13 +20,14 @@ async function authorize() {
     oAuth2Client.setCredentials({
       access_token: process.env.GOOGLE_ACCESS_TOKEN,
       refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
-      scope: ['https://www.googleapis.com/auth/contacts', 'https://www.googleapis.com/auth/calendar.readonly'],
+      scope: [
+        'https://www.googleapis.com/auth/contacts',
+        'https://www.googleapis.com/auth/calendar.readonly',
+      ],
       token_type: process.env.GOOGLE_TOKEN_TYPE,
-      expiry_date: process.env.GOOGLE_EXPIRY_DATE
+      expiry_date: process.env.GOOGLE_EXPIRY_DATE,
     });
-  } catch (error) {
-
-  }
+  } catch (error) {}
 
   return oAuth2Client;
 }
@@ -43,54 +43,46 @@ async function getBirthdays(auth) {
     sortOrder: 'LAST_MODIFIED_DESCENDING',
   });
 
-  const birthdays = [];
-  connections.forEach((connection) => {
-    let birthdayObject = { name: connection.names[0].displayName };
-    let hasBirthday = false;
-    let shouldSendBirthday = false;
-    let hasMobileNumber = false;
-    if (connection.phoneNumbers) {
-      connection.phoneNumbers.forEach((number) => {
-        if (number.type === "mobile") {
-          hasMobileNumber = true;
-          birthdayObject.to = number.canonicalForm;
+  return connections.filter((connection) => {
+    const birthdayObject = { name: connection.names[0].displayName };
+
+    if (!connection.userDefined) return false;
+
+    const canSendHappyBirthday = connection.userDefined.find((userDefined) => userDefined.key === 'happyBirthday' && userDefined.value === 'true');
+    if (!canSendHappyBirthday) return false;
+
+    // Filter out anyone who does not have a cell number on record
+    const contactCellNumber = connection.phoneNumbers.find((phoneNumber) => phoneNumber.type === 'mobile');
+    if (!contactCellNumber) return false;
+    birthdayObject.to = contactCellNumber;
+
+    // Filter out anyone whose birthday is not today
+    const contactBirthday = connection.birthdays.find((birthday) => {
+      if (birthday.date) {
+        const today = new Date();
+        if (
+          birthday.date.month === today.getMonth() + 1
+          && birthday.date.day === today.getDate()
+        ) {
+          return true;
         }
-      })
-    }
-    if (connection.birthdays) {
-      connection.birthdays.forEach((birthday) => {
-        if (birthday.date) {
-          const today = new Date();
-          if (birthday.date.month === today.getMonth() + 1 && birthday.date.day === today.getDate()) {
-            hasBirthday = true;
-          }
-        }
-      });
-    }
-    if (hasBirthday) {
-      if (connection.userDefined) {
-        connection.userDefined.forEach((userDefined) => {
-          if (userDefined.key === 'happyBirthday' && userDefined.value === 'true') {
-            shouldSendBirthday = true;
-          }
-        });
       }
-    }
-    if (hasBirthday && shouldSendBirthday && hasMobileNumber) {
-      birthdays.push(birthdayObject)
-    };
+      return false;
+    });
+
+    if (!contactBirthday) return false;
+    return true;
   });
-  return birthdays;
 }
 
 async function sendTwilioMessages(twilioClient, messages) {
-  return Promise.all(messages.map((message) => {
-    return twilioClient.messages.create({
+  return Promise.all(
+    messages.map((message) => twilioClient.messages.create({
       body: `Happy Birthday ${message.name}! I hope you have a great day! From Steve!`,
       to: message.to,
       from: `+${process.env.TWILIO_NUMBER}`,
-    })
-  }))
+    })),
+  );
 }
 
 async function happyBirthday() {
@@ -103,15 +95,20 @@ async function happyBirthday() {
   }
 
   const birthdaysToSend = await getBirthdays(oAuth2Client);
-
   let twilioSuccessMessages;
   try {
-    twilioSuccessMessages = await sendTwilioMessages(new Twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN), birthdaysToSend);
+    twilioSuccessMessages = await sendTwilioMessages(
+      new Twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN),
+      birthdaysToSend,
+    );
   } catch (error) {
     if (error) console.log('Error sending twilio messages:', error);
     process.exit(1);
   }
-  return { birthdaysSent: `Sent ${twilioSuccessMessages.length} happy birthdays.`, birthdaysToSend };
+  return {
+    birthdaysSent: `Sent ${twilioSuccessMessages.length} happy birthdays.`,
+    birthdaysToSend,
+  };
 }
 
 exports.handler = async (event) => {
@@ -122,3 +119,12 @@ exports.handler = async (event) => {
   };
   return response;
 };
+
+// (async () => {
+//   const { birthdaysSent, birthdaysToSend } = await happyBirthday();
+//   const response = {
+//     statusCode: 200,
+//     body: { birthdaysSent, recipients: JSON.stringify(birthdaysToSend) },
+//   };
+//   return response;
+// })();
