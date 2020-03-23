@@ -12,11 +12,15 @@ jobs:
     - uses: actions/checkout@master
     - run: npm install
     - run: mkdir artifacts
+    # create zip in artifacts folder
     - run: zip -r artifacts/artifact.zip ./
+    # use this premade github action for s3 sync
+    # https://github.com/jakejarvis/s3-sync-action
     - uses: jakejarvis/s3-sync-action@master
       with:
         args: --follow-symlinks --delete --exclude '.git/*'
       env:
+      # aws credentials as set in the project on github
         AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
