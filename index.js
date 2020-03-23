@@ -125,20 +125,20 @@ async function happyBirthday() {
 }
 
 // eslint-disable-next-line no-unused-vars
-// exports.handler = async function _lambda(event, context) {
-//   const { birthdaysSent, birthdaysToSend } = await happyBirthday();
-//   const response = {
-//     statusCode: 200,
-//     body: { birthdaysSent, recipients: JSON.stringify(birthdaysToSend) },
-//   };
-//   return response;
-// };
-
-(async () => {
+exports.handler = async function _lambda(event, context) {
   const { birthdaysSent, birthdaysToSend } = await happyBirthday();
   const response = {
     statusCode: 200,
     body: { birthdaysSent, recipients: JSON.stringify(birthdaysToSend) },
   };
   return response;
-})();
+};
+
+// (async () => {
+//   const { birthdaysSent, birthdaysToSend } = await happyBirthday();
+//   const response = {
+//     statusCode: 200,
+//     body: { birthdaysSent, recipients: JSON.stringify(birthdaysToSend) },
+//   };
+//   return response;
+// })();
