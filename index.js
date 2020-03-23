@@ -51,23 +51,37 @@ async function getBirthdays(auth) {
 
   return reduce(connections, (result, connection) => {
     const birthdayObject = { name: connection.names[0].displayName };
-
-    if (!connection.userDefined) return result;
+    console.log(`Looking at ${birthdayObject.name}`);
+    if (!connection.userDefined) {
+      console.log(`${birthdayObject.name} had no userDefined properties.`);
+      return result;
+    }
 
     const canSendHappyBirthday = connection.userDefined.find(
       (userDefined) => userDefined.key === 'happyBirthday' && userDefined.value === 'true',
     );
-    if (!canSendHappyBirthday) return result;
+    if (!canSendHappyBirthday) {
+      console.log(`${birthdayObject.name} had happyBirthday property set to false`);
+      return result;
+    }
 
     // Filter out anyone who does not have a cell number on record
     const contactCellNumber = connection.phoneNumbers.find(
       (phoneNumber) => phoneNumber.type === 'mobile',
     );
-    if (!contactCellNumber) return result;
+    if (!contactCellNumber) {
+      console.log(`${birthdayObject.name} had no cellphone number.`);
+      return result;
+    }
+
     birthdayObject.to = contactCellNumber.canonicalForm;
+    console.log(`Set cell number ${birthdayObject.to} for ${birthdayObject.name}`);
 
     // Filter out anyone whose birthday is not today
-    if (!connection.birthdays) return result;
+    if (!connection.birthdays) {
+      console.log(`${birthdayObject.name} had no birthday object.`);
+      return result;
+    }
     const contactBirthday = connection.birthdays.find((birthday) => {
       if (birthday.date) {
         const today = new Date();
@@ -81,8 +95,12 @@ async function getBirthdays(auth) {
       return false;
     });
 
-    if (!contactBirthday) return result;
+    if (!contactBirthday) {
+      console.log(`${birthdayObject.name} had no birthday today.`);
+      return result;
+    }
 
+    console.log(`Will send happy birthday to ${birthdayObject.name}`);
     result.push(birthdayObject);
     return result;
   }, []);
