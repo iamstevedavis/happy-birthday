@@ -67,6 +67,7 @@ async function getBirthdays(auth) {
     birthdayObject.to = contactCellNumber.canonicalForm;
 
     // Filter out anyone whose birthday is not today
+    if (!connection.birthdays) return result;
     const contactBirthday = connection.birthdays.find((birthday) => {
       if (birthday.date) {
         const today = new Date();
@@ -124,20 +125,20 @@ async function happyBirthday() {
 }
 
 // eslint-disable-next-line no-unused-vars
-exports.handler = async function _lambda(event, context) {
-  const { birthdaysSent, birthdaysToSend } = await happyBirthday();
-  const response = {
-    statusCode: 200,
-    body: { birthdaysSent, recipients: JSON.stringify(birthdaysToSend) },
-  };
-  return response;
-};
-
-// (async () => {
+// exports.handler = async function _lambda(event, context) {
 //   const { birthdaysSent, birthdaysToSend } = await happyBirthday();
 //   const response = {
 //     statusCode: 200,
 //     body: { birthdaysSent, recipients: JSON.stringify(birthdaysToSend) },
 //   };
 //   return response;
-// })();
+// };
+
+(async () => {
+  const { birthdaysSent, birthdaysToSend } = await happyBirthday();
+  const response = {
+    statusCode: 200,
+    body: { birthdaysSent, recipients: JSON.stringify(birthdaysToSend) },
+  };
+  return response;
+})();
