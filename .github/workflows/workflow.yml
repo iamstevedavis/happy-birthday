@@ -14,6 +14,7 @@ jobs:
     - run: mkdir artifacts
     - run: rm index.js
     - run: mv lambda/index.js ./
+    - run: rm -r googleAuth.js README.md lambda .vscode .git
     # create zip in artifacts folder
     - run: zip -r artifacts/artifact.zip ./
     # use this premade github action for s3 sync
