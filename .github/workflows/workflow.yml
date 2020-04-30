@@ -18,7 +18,7 @@ jobs:
     # https://github.com/jakejarvis/s3-sync-action
     - uses: jakejarvis/s3-sync-action@master
       with:
-        args: --follow-symlinks --delete --exclude '.git/*'
+        args: --follow-symlinks --delete --exclude '.git/* index.js'
       env:
       # aws credentials as set in the project on github
         AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
