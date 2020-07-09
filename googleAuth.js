@@ -11,12 +11,10 @@ const { google } = require('googleapis');
  * To use OAuth2 authentication, we need access to a a CLIENT_ID, CLIENT_SECRET, AND REDIRECT_URI.  To get these credentials for your application, visit https://console.cloud.google.com/apis/credentials.
  */
 const keyPath = path.join(__dirname, 'credentials.json');
-console.log(keyPath)
 let keys = { redirect_uris: [''] };
 if (fs.existsSync(keyPath)) {
   keys = require(keyPath).web;
 }
-console.log(JSON.stringify(keys))
 
 /**
  * Create a new OAuth2 client with the configured keys.
@@ -27,14 +25,8 @@ const oauth2Client = new google.auth.OAuth2(
   keys.redirect_uris[0],
 );
 
-/**
- * This is one of the many ways you can configure googleapis to use authentication credentials.  In this method, we're setting a global reference for all APIs.  Any other API you use here, like google.drive('v3'), will now use this auth client. You can also override the auth client at the service and method call levels.
- */
 google.options({ auth: oauth2Client });
 
-/**
- * Open an http server to accept the oauth callback. In this simple example, the only request to our webserver is to /callback?code=<code>
- */
 async function authenticate(scopes) {
   return new Promise((resolve, reject) => {
     // grab the url that will be used for authorization
@@ -51,7 +43,6 @@ async function authenticate(scopes) {
             res.end('Authentication successful! Please return to the console.');
             server.destroy();
             const { tokens } = await oauth2Client.getToken(qs.get('code'));
-            console.log(JSON.stringify(tokens))
             fs.writeFileSync(path.join(__dirname, 'token.json'), JSON.stringify(tokens));
             oauth2Client.credentials = tokens; // eslint-disable-line require-atomic-updates
             resolve(oauth2Client);
