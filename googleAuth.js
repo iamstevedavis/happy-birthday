@@ -1,44 +1,74 @@
-const { google } = require('googleapis');
-const readline = require('readline');
+const fs = require('fs');
+const path = require('path');
+const http = require('http');
+const url = require('url');
+const opn = require('open');
+const destroyer = require('server-destroy');
 
-// If modifying these scopes, delete token.json.
-const SCOPES = [
-  'https://www.googleapis.com/auth/calendar.readonly',
-  'https://www.googleapis.com/auth/contacts',
-];
+const { google } = require('googleapis');
 
 /**
- * Get and store new token after prompting for user authorization, and then
- * execute the given callback with the authorized OAuth2 client.
- * @param {google.auth.OAuth2} oAuth2Client The OAuth2 client to get token for.
- * @param {getEventsCallback} callback The callback for the authorized client.
+ * To use OAuth2 authentication, we need access to a a CLIENT_ID, CLIENT_SECRET, AND REDIRECT_URI.  To get these credentials for your application, visit https://console.cloud.google.com/apis/credentials.
  */
-function getAccessToken(oAuth2Client) {
-  const authUrl = oAuth2Client.generateAuthUrl({
-    access_type: 'offline',
-    scope: SCOPES,
-  });
-  console.log('Authorize this app by visiting this url:', authUrl);
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  });
+const keyPath = path.join(__dirname, 'credentials.json');
+console.log(keyPath)
+let keys = { redirect_uris: [''] };
+if (fs.existsSync(keyPath)) {
+  keys = require(keyPath).web;
+}
+console.log(JSON.stringify(keys))
 
-  return new Promise((resolve) => {
-    rl.question('Enter the code from that page here: ', (code) => {
-      resolve(code);
+/**
+ * Create a new OAuth2 client with the configured keys.
+ */
+const oauth2Client = new google.auth.OAuth2(
+  keys.client_id,
+  keys.client_secret,
+  keys.redirect_uris[0],
+);
+
+/**
+ * This is one of the many ways you can configure googleapis to use authentication credentials.  In this method, we're setting a global reference for all APIs.  Any other API you use here, like google.drive('v3'), will now use this auth client. You can also override the auth client at the service and method call levels.
+ */
+google.options({ auth: oauth2Client });
+
+/**
+ * Open an http server to accept the oauth callback. In this simple example, the only request to our webserver is to /callback?code=<code>
+ */
+async function authenticate(scopes) {
+  return new Promise((resolve, reject) => {
+    // grab the url that will be used for authorization
+    const authorizeUrl = oauth2Client.generateAuthUrl({
+      access_type: 'offline',
+      scope: scopes.join(' '),
     });
-  })
-    .then((code) => {
-      rl.close();
-      return oAuth2Client.getToken(code);
-    })
-    .then((res) => res.tokens);
+    const server = http
+      .createServer(async (req, res) => {
+        try {
+          if (req.url.indexOf('/oauth2callback') > -1) {
+            const qs = new url.URL(req.url, 'http://localhost:3000')
+              .searchParams;
+            res.end('Authentication successful! Please return to the console.');
+            server.destroy();
+            const { tokens } = await oauth2Client.getToken(qs.get('code'));
+            console.log(JSON.stringify(tokens))
+            fs.writeFileSync(path.join(__dirname, 'token.json'), JSON.stringify(tokens));
+            oauth2Client.credentials = tokens; // eslint-disable-line require-atomic-updates
+            resolve(oauth2Client);
+          }
+        } catch (e) {
+          reject(e);
+        }
+      })
+      .listen(3000, () => {
+        // open the browser to the authorize url to start the workflow
+        opn(authorizeUrl, { wait: false }).then((cp) => cp.unref());
+      });
+    destroyer(server);
+  });
 }
 
-
-token = await getAccessToken(oAuth2Client);
-oAuth2Client.setCredentials(token);
-console.log('Writing Google credentials file...');
-fs.writeFileSync(TOKEN_PATH, JSON.stringify(token));
-console.log('Successfully wrote Google credentials file');
+const scopes = ['https://www.googleapis.com/auth/contacts',
+  'https://www.googleapis.com/auth/calendar.readonly'];
+authenticate(scopes)
+  .catch(console.error);
