@@ -109,7 +109,7 @@ async function getBirthdays(auth) {
 async function sendTwilioMessages(twilioClient, messages) {
   return Promise.all(
     messages.map((message) => twilioClient.messages.create({
-      body: `Happy Birthday ${message.name}! I hope you have a great day! From Steve!`,
+      body: `This is a Happy Birthday \u{1F382} message to ${message.name}:\n Happy happy birthday\n From Steve Davis to you\n Happy happy birthday\n Invite me to the party too!\n\u{1F3B5}`,
       to: message.to,
       from: `+${process.env.TWILIO_NUMBER}`,
     })),
