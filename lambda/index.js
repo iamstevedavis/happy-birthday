@@ -106,14 +106,26 @@ async function getBirthdays(auth) {
   }, []);
 }
 
-async function sendTwilioMessages(twilioClient, messages) {
+async function sendTwilioMessages(twilioClient, contacts) {
   return Promise.all(
-    messages.map((message) => twilioClient.messages.create({
-      body: `This is a Happy Birthday \u{1F382} message to ${message.name}:\n Happy happy birthday\n From Steve Davis to you\n Happy happy birthday\n Invite me to the party too!\n\u{1F3B5}`,
-      to: message.to,
+    contacts.map((contact) => twilioClient.messages.create({
+      body: `This is a Happy Birthday \u{1F382} message to ${contact.name}:\n Happy happy birthday\n From Steve Davis to you\n Happy happy birthday\n Invite me to the party too!\n\u{1F3B5}`,
+      to: contact.to,
       from: `+${process.env.TWILIO_NUMBER}`,
     })),
   );
+}
+
+async function sendSummaryMessage(twilioClient, contacts) {
+  let contactNames = '';
+  contacts.forEach((contact) => {
+    contactNames += ` ${contact.name}`;
+  });
+  return twilioClient.messages.create({
+    body: `Sent happy birthday's to ${contactNames}`,
+    to: `+${process.env.TWILIO_SUMMARY_NUMBER}`,
+    from: `+${process.env.TWILIO_NUMBER}`,
+  });
 }
 
 async function happyBirthday() {
@@ -127,15 +139,17 @@ async function happyBirthday() {
   const birthdaysToSend = await getBirthdays(oAuth2Client);
   console.log(`Birthdays to send ${JSON.stringify(birthdaysToSend)}`);
   let twilioSuccessMessages;
+  const twilioClient = new Twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
   try {
     twilioSuccessMessages = await sendTwilioMessages(
-      new Twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN),
+      twilioClient,
       birthdaysToSend,
     );
   } catch (error) {
     console.log(`Error sending Twilio messages ${JSON.stringify(error)}`);
     process.exit(1);
   }
+  await sendSummaryMessage(twilioClient, birthdaysToSend);
   return {
     birthdaysSent: `Sent ${twilioSuccessMessages.length} happy birthdays.`,
     birthdaysToSend,
