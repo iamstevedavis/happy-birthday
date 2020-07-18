@@ -138,6 +138,9 @@ async function happyBirthday() {
 
   const birthdaysToSend = await getBirthdays(oAuth2Client);
   console.log(`Birthdays to send ${JSON.stringify(birthdaysToSend)}`);
+  if (birthdaysToSend.length === 0) {
+    process.exit(0);
+  }
   let twilioSuccessMessages;
   const twilioClient = new Twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
   try {
