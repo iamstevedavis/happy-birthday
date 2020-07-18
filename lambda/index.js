@@ -119,7 +119,7 @@ async function sendTwilioMessages(twilioClient, contacts) {
 async function sendSummaryMessage(twilioClient, contacts) {
   let contactNames = '';
   contacts.forEach((contact) => {
-    contactNames += ` ${contact.name}`;
+    contactNames += `${contact.name} `;
   });
   return twilioClient.messages.create({
     body: `Sent happy birthday's to ${contactNames}`,
@@ -138,33 +138,29 @@ async function happyBirthday() {
 
   const birthdaysToSend = await getBirthdays(oAuth2Client);
   console.log(`Birthdays to send ${JSON.stringify(birthdaysToSend)}`);
-  if (birthdaysToSend.length === 0) {
-    process.exit(0);
-  }
-  let twilioSuccessMessages;
+  let twilioSuccessMessages = [];
   const twilioClient = new Twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-  try {
-    twilioSuccessMessages = await sendTwilioMessages(
-      twilioClient,
-      birthdaysToSend,
-    );
-  } catch (error) {
-    console.log(`Error sending Twilio messages ${JSON.stringify(error)}`);
-    process.exit(1);
+  if (birthdaysToSend && birthdaysToSend.length !== 0) {
+    try {
+      twilioSuccessMessages = await sendTwilioMessages(
+        twilioClient,
+        birthdaysToSend,
+      );
+    } catch (error) {
+      console.log(`Error sending Twilio messages ${JSON.stringify(error)}`);
+      process.exit(1);
+    }
+    await sendSummaryMessage(twilioClient, birthdaysToSend);
   }
-  await sendSummaryMessage(twilioClient, birthdaysToSend);
-  return {
-    birthdaysSent: `Sent ${twilioSuccessMessages.length} happy birthdays.`,
-    birthdaysToSend,
-  };
+  return twilioSuccessMessages;
 }
 
 // eslint-disable-next-line no-unused-vars
 exports.handler = async function _lambda(event, context) {
-  const { birthdaysSent, birthdaysToSend } = await happyBirthday();
+  const twilioSuccessMessages = await happyBirthday();
   const response = {
     statusCode: 200,
-    body: { birthdaysSent, recipients: JSON.stringify(birthdaysToSend) },
+    body: { twilioReport: JSON.stringify(twilioSuccessMessages) },
   };
   return response;
 };
