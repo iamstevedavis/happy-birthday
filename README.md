@@ -5,5 +5,7 @@ Uses github actions to zip up the build and push to S3 for consumption by the la
  - They have a cell phone number
  - It is their birthday
  - I have specified they should be sent the message via a custom field in Google contacts
- 
+
  Lambda auths with Google to get my contacts and Twilio to send the message.
+
+https://developers.google.com/people/api/rest/
