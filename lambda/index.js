@@ -118,10 +118,19 @@ async function sendTwilioMessages(twilioClient, contacts) {
 }
 
 async function sendSummaryMessage(twilioClient, contacts) {
+  if (contacts.length === 0) {
+    return twilioClient.messages.create({
+      body: 'No birthdays today.',
+      to: `+${process.env.TWILIO_SUMMARY_NUMBER}`,
+      from: `+${process.env.TWILIO_NUMBER}`,
+    });
+  }
+
   let contactNames = '';
   contacts.forEach((contact) => {
     contactNames += `${contact.name} `;
   });
+
   return twilioClient.messages.create({
     body: `Sent happy birthday's to ${contactNames}`,
     to: `+${process.env.TWILIO_SUMMARY_NUMBER}`,
@@ -151,8 +160,9 @@ async function happyBirthday() {
       console.log(`Error sending Twilio messages ${JSON.stringify(error)}`);
       process.exit(1);
     }
-    await sendSummaryMessage(twilioClient, birthdaysToSend);
   }
+  await sendSummaryMessage(twilioClient, birthdaysToSend);
+
   return twilioSuccessMessages;
 }
 
