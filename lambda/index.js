@@ -139,6 +139,7 @@ async function sendSummaryMessage(twilioClient, contacts) {
 }
 
 async function happyBirthday() {
+  console.time('birthday');
   let oAuth2Client = null;
   try {
     oAuth2Client = await authorize();
@@ -152,7 +153,7 @@ async function happyBirthday() {
   const twilioClient = new Twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
   if (birthdaysToSend && birthdaysToSend.length !== 0) {
     try {
-      twilioSuccessMessages = await sendTwilioMessages(
+      twilioSuccessMessages = sendTwilioMessages(
         twilioClient,
         birthdaysToSend,
       );
@@ -161,8 +162,8 @@ async function happyBirthday() {
       process.exit(1);
     }
   }
-  await sendSummaryMessage(twilioClient, birthdaysToSend);
-
+  sendSummaryMessage(twilioClient, birthdaysToSend);
+  console.timeEnd('birthday');
   return twilioSuccessMessages;
 }
 
