@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 const { google } = require('googleapis');
 const Twilio = require('twilio');
 const reduce = require('lodash.reduce');
@@ -29,7 +30,7 @@ async function authorize() {
       expiry_date: process.env.GOOGLE_EXPIRY_DATE,
     });
   } catch (error) {
-    console.log(`Error authenticating with Google ${error}`);
+    console.error(`Error authenticating with Google ${error}`);
     process.exit(1);
   }
 
@@ -47,14 +48,14 @@ async function getBirthdays(auth) {
     sortOrder: 'LAST_MODIFIED_DESCENDING',
   });
 
-  console.log(`Got ${connections.length} connections from Google`);
+  console.info(`Got ${connections.length} connections from Google`);
 
   return reduce(connections, (result, connection) => {
     const birthdayObject = { name: connection.names[0].displayName };
 
     // Filter out anyone whose birthday is not today
     if (!connection.birthdays) {
-      console.log(`${birthdayObject.name} had no birthday object.`);
+      console.info(`${birthdayObject.name} had no birthday object.`);
       return result;
     }
 
@@ -72,20 +73,20 @@ async function getBirthdays(auth) {
     });
 
     if (!contactBirthday) {
-      console.log(`${birthdayObject.name} had no birthday today.`);
+      console.info(`${birthdayObject.name} had no birthday today.`);
       return result;
     }
 
-    console.log(`Looking at ${birthdayObject.name}`);
+    console.info(`Looking at ${birthdayObject.name}`);
     if (!connection.userDefined) {
-      console.log(`${birthdayObject.name} had no userDefined properties.`);
+      console.info(`${birthdayObject.name} had no userDefined properties.`);
       return result;
     }
 
     if (!connection.userDefined.find(
       (userDefined) => userDefined.key === 'happyBirthday' && userDefined.value === 'true',
     )) {
-      console.log(`${birthdayObject.name} had happyBirthday property set to false`);
+      console.info(`${birthdayObject.name} had happyBirthday property set to false`);
       return result;
     }
 
@@ -94,14 +95,14 @@ async function getBirthdays(auth) {
       (phoneNumber) => phoneNumber.type === 'mobile',
     );
     if (!contactCellNumber) {
-      console.log(`${birthdayObject.name} had no cellphone number.`);
+      console.info(`${birthdayObject.name} had no cellphone number.`);
       return result;
     }
 
     birthdayObject.to = contactCellNumber.canonicalForm;
-    console.log(`Set cell number ${birthdayObject.to} for ${birthdayObject.name}`);
+    console.info(`Set cell number ${birthdayObject.to} for ${birthdayObject.name}`);
 
-    console.log(`Will send happy birthday to ${birthdayObject.name}`);
+    console.info(`Will send happy birthday to ${birthdayObject.name}`);
     result.push(birthdayObject);
     return result;
   }, []);
@@ -139,7 +140,7 @@ async function sendSummaryMessage(twilioClient, contacts) {
 }
 
 async function happyBirthday() {
-  console.time('birthday');
+  console.time('Birthday_Runtime');
   let oAuth2Client = null;
   try {
     oAuth2Client = await authorize();
@@ -148,22 +149,23 @@ async function happyBirthday() {
   }
 
   const birthdaysToSend = await getBirthdays(oAuth2Client);
-  console.log(`Birthdays to send ${JSON.stringify(birthdaysToSend)}`);
+  console.info(`Birthdays to send ${JSON.stringify(birthdaysToSend)}`);
   let twilioSuccessMessages = [];
   const twilioClient = new Twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
   if (birthdaysToSend && birthdaysToSend.length !== 0) {
     try {
-      twilioSuccessMessages = sendTwilioMessages(
+      twilioSuccessMessages = await sendTwilioMessages(
         twilioClient,
         birthdaysToSend,
       );
     } catch (error) {
-      console.log(`Error sending Twilio messages ${JSON.stringify(error)}`);
+      console.error(`Error sending Twilio messages ${JSON.stringify(error)}`);
       process.exit(1);
     }
   }
-  sendSummaryMessage(twilioClient, birthdaysToSend);
-  console.timeEnd('birthday');
+  console.info(`Sending summary message to ${process.env.TWILIO_SUMMARY_NUMBER}`);
+  await sendSummaryMessage(twilioClient, birthdaysToSend);
+  console.timeEnd('Birthday_Runtime');
   return twilioSuccessMessages;
 }
 

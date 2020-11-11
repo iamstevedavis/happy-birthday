@@ -13,13 +13,13 @@
     "dotenv": "^8.2.0",
     "googleapis": "^60.0.1",
     "lodash.reduce": "^4.6.0",
-    "twilio": "^3.49.4"
+    "twilio": "^3.51.0"
   },
   "devDependencies": {
-    "eslint": "^7.10.0",
-    "eslint-config-airbnb-base": "^14.2.0",
+    "eslint": "^7.13.0",
+    "eslint-config-airbnb-base": "^14.2.1",
     "eslint-plugin-import": "^2.22.1",
-    "server-destroy": "^1.0.1",
-    "open": "^7.3.0"
+    "open": "^7.3.0",
+    "server-destroy": "^1.0.1"
   }
 }
