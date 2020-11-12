@@ -1,4 +1,4 @@
-const { handler } = require('./lambda');
+const { handler } = require('./lambda/happyBirthday');
 
 handler({}, {}, (data) => {
   console.log(data);
