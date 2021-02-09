@@ -4,8 +4,8 @@ const lambda = new aws.Lambda();
 
 // eslint-disable-next-line no-unused-vars
 exports.handler = function _lambdaS3Update(event, context) {
-  console.log(JSON.stringify(event));
-  console.log(JSON.stringify(context));
+  console.log('event', JSON.stringify(event));
+  console.log('context', JSON.stringify(context));
 
   const functionName = process.env.LAMBDA_FUNCTION_NAME;
   const s3Key = process.env.S3_KEY;
