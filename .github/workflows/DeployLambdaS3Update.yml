@@ -11,9 +11,10 @@ jobs:
     steps:
     - uses: actions/checkout@master
     - run: mkdir artifacts
+    - run: npm install @aws-sdk/client-lambda
     - run: mv lambda/lambdaS3Update.js ./index.js
     # create zip in artifacts folder
-    - run: zip artifacts/lambdaS3Update.zip index.js
+    - run: zip -r artifacts/lambdaS3Update.zip node_modules index.js
     # use this premade github action for s3 sync
     # https://github.com/jakejarvis/s3-sync-action
     - uses: jakejarvis/s3-sync-action@master
