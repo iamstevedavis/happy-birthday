@@ -10,11 +10,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@master
-    - run: npm install --only=prod
+    - run: npm install twilio
     - run: mkdir artifacts
-    - run: mv lambda/happyBirthday.js ./index.js
+    - run: mv lambda/reply.js ./index.js
     # create zip in artifacts folder
-    - run: zip -r artifacts/happyBirthday.zip node_modules index.js
+    - run: zip -r artifacts/reply.zip node_modules index.js
     # use this premade github action for s3 sync
     # https://github.com/jakejarvis/s3-sync-action
     - uses: jakejarvis/s3-sync-action@master
@@ -22,7 +22,7 @@ jobs:
         args: --follow-symlinks --delete --exclude '.git/* index.js'
       env:
       # aws credentials as set in the project on github
-        AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
+        AWS_S3_BUCKET: ${{ secrets.REPLY_AWS_S3_BUCKET }}
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         AWS_REGION: 'ca-central-1'

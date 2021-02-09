@@ -10,12 +10,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@master
-    - run: npm install aws-sdk
     - run: mkdir artifacts
     - run: mv lambda/lambdaS3Update.js ./index.js
-    - run: rm -r googleAuth.js README.md lambda .vscode .git
     # create zip in artifacts folder
-    - run: zip -r artifacts/lambdaS3Update.zip ./
+    - run: zip artifacts/lambdaS3Update.zip index.js
     # use this premade github action for s3 sync
     # https://github.com/jakejarvis/s3-sync-action
     - uses: jakejarvis/s3-sync-action@master

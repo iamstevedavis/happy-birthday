@@ -52,7 +52,7 @@ typings/
 *.tgz
 
 # dotenv environment variable files
-.env*
+.env
 
 # gatsby files
 .cache/
@@ -72,3 +72,4 @@ token.json
 credentials.json
 twilio_token.json
 *.zip
+index.js
