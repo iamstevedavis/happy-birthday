@@ -1,7 +1,9 @@
 const { LambdaClient, UpdateFunctionCodeCommand } = require('@aws-sdk/client-lambda');
 
+exports.getNewUpdateFunctionCodeCommand = (params) => new UpdateFunctionCodeCommand(params);
+
 // eslint-disable-next-line no-unused-vars
-exports.handler = function _lambdaS3Update(event, context) {
+exports.handler = function _lambdaS3Update(event) {
   const client = new LambdaClient();
   const eventDataRecords = event.Records;
   const promises = [];
@@ -13,15 +15,14 @@ exports.handler = function _lambdaS3Update(event, context) {
     const s3Bucket = s3EventData.bucket.name;
 
     console.info(`Updating Lambda Function ${functionName} from ${s3Bucket} - ${s3Key}`);
+
     const params = {
       FunctionName: functionName,
       S3Key: s3Key,
       S3Bucket: s3Bucket,
     };
 
-    const command = new UpdateFunctionCodeCommand(params);
-
-    promises.push(client.send(command));
+    promises.push(client.send(this.getNewUpdateFunctionCodeCommand(params)));
   });
 
   return Promise.all(promises);

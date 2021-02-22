@@ -6,7 +6,9 @@
   "author": "steve@visda.ca",
   "scripts": {
     "lint": "eslint index.js lambda/*.js --fix",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "testt": "NODE_ENV=test mocha tests/**/*.test.*",
+    "test": "NODE_ENV=test mocha --recursive"
+
   },
   "license": "ISC",
   "dependencies": {
@@ -17,10 +19,13 @@
     "twilio": "^3.51.0"
   },
   "devDependencies": {
+    "chai": "^4.3.0",
     "eslint": "^7.13.0",
     "eslint-config-airbnb-base": "^14.2.1",
     "eslint-plugin-import": "^2.22.1",
+    "mocha": "^8.2.1",
     "open": "^7.3.0",
-    "server-destroy": "^1.0.1"
+    "server-destroy": "^1.0.1",
+    "sinon": "^9.2.4"
   }
 }

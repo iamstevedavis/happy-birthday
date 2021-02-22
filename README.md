@@ -1,11 +1,10 @@
 # happy-birthday
-Automatically sends happy birthday to people
 
-Uses github actions to zip up the build and push to S3 for consumption by the lambda. Lambda runs once a day and checks for users that meet the following criteria:
- - They have a cell phone number
- - It is their birthday
- - I have specified they should be sent the message via a custom field in Google contacts
+Automatically sends happy birthday to people in my contacts that meet the following criteria:
 
- Lambda auths with Google to get my contacts and Twilio to send the message.
+1. It is their birthday today
+2. They have the flag set happyBirthday=true in their contact info
+3. They have a cell phone number (phone number filled out as mobile in Google contacts)
 
-https://developers.google.com/people/api/rest/
+The lambda runs once a day at 9:00 EST.
+
