@@ -6,7 +6,6 @@
   "author": "steve@visda.ca",
   "scripts": {
     "lint": "eslint index.js lambda/*.js --fix",
-    "testt": "NODE_ENV=test mocha tests/**/*.test.*",
     "test": "NODE_ENV=test mocha --recursive"
 
   },
