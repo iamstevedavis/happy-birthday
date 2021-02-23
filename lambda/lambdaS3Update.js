@@ -22,7 +22,7 @@ exports.handler = function _lambdaS3Update(event) {
       S3Bucket: s3Bucket,
     };
 
-    promises.push(client.send(this.getNewUpdateFunctionCodeCommand(params)));
+    promises.push(client.send(module.exports.getNewUpdateFunctionCodeCommand(params)));
   });
 
   return Promise.all(promises);

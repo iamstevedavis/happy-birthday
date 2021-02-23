@@ -11,10 +11,10 @@ exports.createTwilioMessage = (client, body, to, from) => {
 };
 
 exports.handler = async (event) => {
-  const twilioClient = this.getTwilio();
+  const twilioClient = module.exports.getTwilio();
   const to = `+${process.env.TWILIO_SUMMARY_NUMBER}`;
   const from = `+${process.env.TWILIO_NUMBER}`;
-  await this.createTwilioMessage(twilioClient, event.Body, to, from);
+  await module.exports.createTwilioMessage(twilioClient, event.Body, to, from);
 
   return '<?xml version="1.0" encoding="UTF-8"?><Response><Message><Body>I will forward that along to Steve!</Body></Message></Response>';
 };
