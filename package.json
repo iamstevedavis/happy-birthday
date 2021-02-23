@@ -7,11 +7,10 @@
   "scripts": {
     "lint": "eslint index.js lambda/*.js --fix",
     "test": "NODE_ENV=test mocha --recursive"
-
   },
   "license": "ISC",
   "dependencies": {
-    "@aws-sdk/client-lambda": "^3.4.1",
+    "@aws-sdk/client-lambda": "^3.6.1",
     "dotenv": "^8.2.0",
     "googleapis": "^60.0.1",
     "lodash.reduce": "^4.6.0",
